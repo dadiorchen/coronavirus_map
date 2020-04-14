@@ -4,7 +4,7 @@ import moment from 'moment'
 
 
 function convertDatasource1ToMyData(lines){
-  const head = lines[0].split(',')
+  const head = CSVtoArray(lines[0])
   console.log('head', head)
   const linesReal = lines.slice(1, lines.length - 1)
   console.log('has real line:', linesReal.length)
@@ -16,8 +16,8 @@ function convertDatasource1ToMyData(lines){
     if(line.trim() === ''){
       console.log('cancel empty line')
     }
-    const elements = line.split(',')
-    if(elements.length !== head.length){
+    const elements = CSVtoArray(line)
+    if(!elements || elements.length !== head.length){
       //throw Error( `bad line:'${line}'`)
       console.error('bad line:', line)
       return
@@ -57,6 +57,64 @@ function convertDatasource1ToMyData(lines){
   console.log('Afghanistan:', places['Afghanistan'])
   return places
 
+}
+
+function convertDatasource1USToMyData(lines){
+  const head = CSVtoArray(lines[0])
+  console.log('head', head)
+  const linesReal = lines.slice(1, lines.length - 1)
+  console.log('has real line:', linesReal.length)
+  console.log('line 0:', linesReal[0])
+  console.log('line last:', linesReal[linesReal.length -1])
+
+  const places = {}
+  linesReal.forEach(line => {
+    if(line.trim() === ''){
+      console.log('cancel empty line')
+    }
+    const elements = CSVtoArray(line)
+    if(!elements || elements.length !== head.length){
+      //throw Error( `bad line:'${line}'`)
+      console.error('bad line:', line)
+      return
+    }
+    const placeOriginal = elements[10]
+    if(!/.*, ?US$/.test(placeOriginal)){
+      throw Error(`bad line, wrong location:${placeOriginal}`)
+    }
+    const place = 'United States of America|' + elements[10].split(',').slice(0, -1).reverse().map(e => e.trim()).join('|')
+    if(places[place]){
+      //
+    }else{
+      const a = {
+        confirmedCount : {
+        },
+        Lat: elements[8],
+        Long: elements[9],
+        source: 1,
+      }
+      for(let i = 11; i < head.length; i++ ){
+        //a date
+        const date = head[i]
+        if(!/\d+\/\d+\//.test(date)){
+          throw Error('the head is not a date:', date)
+        }
+        const dateFormated = moment(date, 'M/D/YY').format('YYYYMMDD')
+        const cases = elements[i]
+        if(!/\d+/.test(cases)){
+          throw Error('the cases is not a number:', cases)
+        }
+        const casesNumbered = parseInt(cases)
+        if(casesNumbered > 0){
+          a.confirmedCount[dateFormated] = casesNumbered
+        }
+      }
+      places[place] = a
+    }
+  })
+  console.log('country sample:', Object.keys(places).slice(0, 5))
+  console.log('country count:', Object.keys(places).length)
+  return places
 }
 
 function convertDatasource2ToMyData(json){
@@ -238,7 +296,7 @@ function outputTable(places){
           adms[2]?adms[2]:'',
           adms[3]?adms[3]:'',
           '',
-          placeValue.source? ['CSSEGISandData', 'stevenliuyi', 'beoutbreakprepared'][placeValue.source -1]:'',
+          placeValue.source? placeValue.source:'',
         ]
         outputLines.push(line)
         casesAccumulated = cases
@@ -271,8 +329,9 @@ function outputTable(places){
 
 function run(){
   //data source 1
-  let places1
-  let places2
+  let places1 = {}
+  let places1US = {}
+  let places2 = {}
   fetch('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv').then(data => {
     const dataString = data.toString()
     console.log('sample data:', dataString.slice(0, 200))
@@ -282,12 +341,24 @@ function run(){
     console.log('line last:', lines[lines.length -1])
     places1 = convertDatasource1ToMyData(lines)
   }).then(() => {
+    return fetch('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv')
+  }).then(data => {
+    const dataString = data.toString()
+    console.log('sample data:', dataString.slice(0, 200))
+    const lines = dataString.split(/\n/)
+    console.log('has line:', lines.length)
+    console.log('line 0:', lines[0])
+    console.log('line last:', lines[lines.length -1])
+    places1US = convertDatasource1USToMyData(lines)
+  }).then(() => {
     return fetch('https://raw.githubusercontent.com/stevenliuyi/covid19/master/public/data/all.json')
   }).then(data => {
     const json = JSON.parse(data.toString())
     places2 = convertDatasource2ToMyData(json)
+  }).then(() => {
     //merge
-    const places = Object.assign(places2, places1)
+    let places = {}
+    Object.assign(places, places2, places1US, places1)
 
     //const places = {}
     const result = outputTable(places)
@@ -303,11 +374,12 @@ function run(){
       'total area, total countries,last update' + '\n' + 
       Object.keys(result.places).length + ',' + 
       Object.keys(result.countries).length + ',' + 
-      moment(new Date()).format('YYYYMMDD HH:mm') + 
+      '"' + new Date().toUTCString() + '"' + 
       '\n'
     )
   })
 }
+
 
 function fetch(url){
   return new Promise((resolve, reject) => {
@@ -328,5 +400,26 @@ function fetch(url){
   })
 }
 
-export {fetch, run, convertDatasource1ToMyData, convertDatasource2ToMyData, outputTable}
+// Return array of string values, or NULL if CSV string not well formed.
+function CSVtoArray(text) {
+    var re_valid = /^\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*(?:,\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*)*$/;
+    var re_value = /(?!\s*$)\s*(?:'([^'\\]*(?:\\[\S\s][^'\\]*)*)'|"([^"\\]*(?:\\[\S\s][^"\\]*)*)"|([^,'"\s\\]*(?:\s+[^,'"\s\\]+)*))\s*(?:,|$)/g;
+    // Return NULL if input string is not well formed CSV string.
+    if (!re_valid.test(text)) return null;
+    var a = [];                     // Initialize array to receive values.
+    text.replace(re_value, // "Walk" the string using replace with callback.
+        function(m0, m1, m2, m3) {
+            // Remove backslash from \' in single quoted values.
+            if      (m1 !== undefined) a.push(m1.replace(/\\'/g, "'"));
+            // Remove backslash from \" in double quoted values.
+            else if (m2 !== undefined) a.push(m2.replace(/\\"/g, '"'));
+            else if (m3 !== undefined) a.push(m3);
+            return ''; // Return empty string.
+        });
+    // Handle special case of empty last value.
+    if (/,\s*$/.test(text)) a.push('');
+    return a;
+}
+
+export {fetch, CSVtoArray, run, convertDatasource1ToMyData,convertDatasource1USToMyData, convertDatasource2ToMyData, outputTable}
 
