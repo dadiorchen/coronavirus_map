@@ -118,6 +118,15 @@ function convertDatasource1USToMyData(lines){
 }
 
 function convertDatasource2ToMyData(json){
+  function confirmedCountConvert(confirmedCount){
+    //convert the timestamp
+    const confirmedCountNew = {}
+    Object.keys(confirmedCount).forEach(date => {
+      confirmedCountNew[moment(date).format('YYYYMMDD')] = 
+        confirmedCount[date]
+    })
+    return confirmedCountNew
+  }
   console.log('countries count:', Object.keys(json).length)
   //{
   //  China|Beijing : {
@@ -144,7 +153,7 @@ function convertDatasource2ToMyData(json){
       return
     }
     places[countryName] = {
-      confirmedCount,
+      confirmedCount: confirmedCountConvert(confirmedCount),
       source: 2,
     }
 
@@ -166,7 +175,7 @@ function convertDatasource2ToMyData(json){
         return
       }
       places[countryName + "|" + adm1Name] = {
-        confirmedCount,
+        confirmedCount: confirmedCountConvert(confirmedCount),
         source: 2,
       }
 
@@ -188,7 +197,7 @@ function convertDatasource2ToMyData(json){
           return
         }
         places[countryName + "|" + adm1Name + "|" + adm2Name] = {
-          confirmedCount,
+          confirmedCount: confirmedCountConvert(confirmedCount),
           source: 2,
         }
 
@@ -210,7 +219,7 @@ function convertDatasource2ToMyData(json){
             return
           }
           places[countryName + "|" + adm1Name + "|" + adm2Name + "|" + adm3Name] = {
-            confirmedCount,
+            confirmedCount: confirmedCountConvert(confirmedCount),
             source: 2,
           }
 
@@ -232,7 +241,7 @@ function convertDatasource2ToMyData(json){
               return
             }
             places[countryName + "|" + adm1Name + "|" + adm2Name + "|" + adm3Name + "|" + adm4Name] = {
-              confirmedCount,
+              confirmedCount: confirmedCountConvert(confirmedCount),
               source: 2,
             }
           })
@@ -303,7 +312,7 @@ function outputTable(places){
       }
     })
   })
-  console.log('output lines sample:', outputLines.slice(0, 2))
+  console.log('output lines sample:', outputLines.slice(0, 20))
   console.log('output lines num:', outputLines.length)
   const countries = {
   }
@@ -356,27 +365,57 @@ function run(){
     const json = JSON.parse(data.toString())
     places2 = convertDatasource2ToMyData(json)
   }).then(() => {
-    //merge
-    let places = {}
-    Object.assign(places, places2, places1US, places1)
 
-    //const places = {}
-    const result = outputTable(places)
-    //output
-    fs.writeFileSync(
-      '../coronavirus_map_data/data.csv',
-      result.outputLines.reduce((a,c) => {
-        return a + '\n' + c.join(',') 
-      },'')
-    )
-    fs.writeFileSync(
-      '../coronavirus_map_data/report.csv',
-      'total area, total countries,last update' + '\n' + 
-      Object.keys(result.places).length + ',' + 
-      Object.keys(result.countries).length + ',' + 
-      '"' + new Date().toUTCString() + '"' + 
-      '\n'
-    )
+    //all table
+    {
+      //merge
+      let places = {}
+      Object.assign(places, places2, places1US, places1)
+      const result = outputTable(places)
+      //output
+      fs.writeFileSync(
+        './data/all.csv',
+        result.outputLines.reduce((a,c,i) => {
+          {return i === 0 ? c: (a + '\n' + c)}
+        },'')
+      )
+      fs.writeFileSync(
+        './data/report.csv',
+        'total area, total countries,last update' + '\n' + 
+        Object.keys(result.places).length + ',' + 
+        Object.keys(result.countries).length + ',' + 
+        '"' + new Date().toUTCString() + '"' + 
+        '\n'
+      )
+    }
+
+    //datasource 1 table
+    {
+      //merge
+      let places = {}
+      Object.assign(places, places1US, places1)
+      const result = outputTable(places)
+      //output
+      fs.writeFileSync(
+        './data/datasource1.csv',
+        result.outputLines.reduce((a,c,i) => {
+          {return i === 0 ? c: (a + '\n' + c)}
+        },'')
+      )
+    }
+    {
+      //merge
+      let places = {}
+      Object.assign(places, places2)
+      const result = outputTable(places)
+      //output
+      fs.writeFileSync(
+        './data/datasource2.csv',
+        result.outputLines.reduce((a,c,i) => {
+          {return i === 0 ? c: (a + '\n' + c)}
+        },'')
+      )
+    }
   })
 }
 
