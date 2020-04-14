@@ -28,7 +28,10 @@ function convertDatasource1ToMyData(lines){
     }else{
       const a = {
         confirmedCount : {
-        }
+        },
+        Lat: elements[2],
+        Long: elements[3],
+        source: 1,
       }
       for(let i = 4; i < head.length; i++ ){
         //a date
@@ -83,7 +86,8 @@ function convertDatasource2ToMyData(json){
       return
     }
     places[countryName] = {
-      confirmedCount
+      confirmedCount,
+      source: 2,
     }
 
     //adm 1
@@ -104,7 +108,8 @@ function convertDatasource2ToMyData(json){
         return
       }
       places[countryName + "|" + adm1Name] = {
-        confirmedCount
+        confirmedCount,
+        source: 2,
       }
 
       //adm 2
@@ -125,7 +130,8 @@ function convertDatasource2ToMyData(json){
           return
         }
         places[countryName + "|" + adm1Name + "|" + adm2Name] = {
-          confirmedCount
+          confirmedCount,
+          source: 2,
         }
 
         //adm 3
@@ -146,7 +152,8 @@ function convertDatasource2ToMyData(json){
             return
           }
           places[countryName + "|" + adm1Name + "|" + adm2Name + "|" + adm3Name] = {
-            confirmedCount
+            confirmedCount,
+            source: 2,
           }
 
           //adm 4
@@ -167,7 +174,8 @@ function convertDatasource2ToMyData(json){
               return
             }
             places[countryName + "|" + adm1Name + "|" + adm2Name + "|" + adm3Name + "|" + adm4Name] = {
-              confirmedCount
+              confirmedCount,
+              source: 2,
             }
           })
         })
@@ -198,7 +206,8 @@ function outputTable(places){
     'adm1',
     'adm3',
     'adm4',
-    'indiv'
+    'indiv',
+    'source',
   ]
   let num = 1
   const outputLines = []
@@ -216,8 +225,8 @@ function outputTable(places){
       }else{
         const line = [
           num++,
-          '',
-          '',
+          placeValue.Lat? placeValue.Lat:'',
+          placeValue.Long? placeValue.Long:'',
           cases,
           '',
           '',
@@ -228,7 +237,8 @@ function outputTable(places){
           adms[1]?adms[1]:'',
           adms[2]?adms[2]:'',
           adms[3]?adms[3]:'',
-          ''
+          '',
+          placeValue.source? ['CSSEGISandData', 'stevenliuyi', 'beoutbreakprepared'][placeValue.source -1]:'',
         ]
         outputLines.push(line)
         casesAccumulated = cases
@@ -277,7 +287,7 @@ function run(){
     const json = JSON.parse(data.toString())
     places2 = convertDatasource2ToMyData(json)
     //merge
-    const places = Object.assign(places1, places2)
+    const places = Object.assign(places2, places1)
 
     //const places = {}
     const result = outputTable(places)
@@ -293,7 +303,8 @@ function run(){
       'total area, total countries,last update' + '\n' + 
       Object.keys(result.places).length + ',' + 
       Object.keys(result.countries).length + ',' + 
-      moment(new Date()).format('YYYYMMDD HH:mm')
+      moment(new Date()).format('YYYYMMDD HH:mm') + 
+      '\n'
     )
   })
 }

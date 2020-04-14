@@ -28,7 +28,8 @@ describe('test', () => {
     const data = fs.readFileSync('./samples/source2.json')
     const json = JSON.parse(data.toString())
     const places = convertDatasource2ToMyData(json)
-    outputTable(places)
+    const result = outputTable(places)
+    console.log('output table sample:', result.outputLines.slice(0, 5))
   })
 
 
