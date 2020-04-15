@@ -614,13 +614,13 @@ function run(){
       const result = outputTable(places)
       //output
       fs.writeFileSync(
-        './data/all.csv',
+        '../data/all.csv',
         result.outputLines.reduce((a,c,i) => {
           {return i === 0 ? c: (a + '\n' + c)}
         },'')
       )
       fs.writeFileSync(
-        './data/report.csv',
+        '../data/report.csv',
         'total area, total countries,last update' + '\n' + 
         Object.keys(result.places).length + ',' + 
         Object.keys(result.countries).length + ',' + 
@@ -631,7 +631,7 @@ function run(){
       {
         const result = outputTableLocation(places)
         fs.writeFileSync(
-          './data/locations.csv',
+          '../data/locations.csv',
           result.outputLines.reduce((a,c,i) => {
             {return i === 0 ? c: (a + '\n' + c)}
           },'')
@@ -647,7 +647,7 @@ function run(){
       const result = outputTable(places)
       //output
       fs.writeFileSync(
-        './data/datasource1.csv',
+        '../data/datasource1.csv',
         result.outputLines.reduce((a,c,i) => {
           {return i === 0 ? c: (a + '\n' + c)}
         },'')
@@ -660,7 +660,7 @@ function run(){
       const result = outputTable(places)
       //output
       fs.writeFileSync(
-        './data/datasource2.csv',
+        '../data/datasource2.csv',
         result.outputLines.reduce((a,c,i) => {
           {return i === 0 ? c: (a + '\n' + c)}
         },'')
