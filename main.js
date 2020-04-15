@@ -59,6 +59,104 @@ function convertDatasource1ToMyData(lines){
 
 }
 
+function mergeDeathToDatasource1(places, lines){
+  const head = CSVtoArray(lines[0])
+  console.log('head', head)
+  const linesReal = lines.slice(1, lines.length - 1)
+  console.log('has real line:', linesReal.length)
+  console.log('line 0:', linesReal[0])
+  console.log('line last:', linesReal[linesReal.length -1])
+
+  linesReal.forEach(line => {
+    if(line.trim() === ''){
+      console.log('cancel empty line')
+    }
+    const elements = CSVtoArray(line)
+    if(!elements || elements.length !== head.length){
+      //throw Error( `bad line:'${line}'`)
+      console.error('bad line:', line)
+      return
+    }
+    const place = elements[1] + (elements[0]? ('|' + elements[0]) : '')
+    if(!places[place]){
+      //
+    }else{
+      const deadCount = {
+      }
+      for(let i = 4; i < head.length; i++ ){
+        //a date
+        const date = head[i]
+        if(!/\d+\/\d+\//.test(date)){
+          throw Error('the head is not a date:', date)
+        }
+        const dateFormated = moment(date, 'M/D/YY').format('YYYYMMDD')
+        const cases = elements[i]
+        if(!/\d+/.test(cases)){
+          throw Error('the cases is not a number:', cases)
+        }
+        const casesNumbered = parseInt(cases)
+        if(casesNumbered > 0){
+          deadCount[dateFormated] = casesNumbered
+        }
+      }
+      places[place].deadCount = deadCount
+    }
+  })
+  console.log('country sample:', Object.keys(places).slice(0, 5))
+  console.log('country count:', Object.keys(places).length)
+  console.log('Afghanistan:', places['Afghanistan'])
+  return places
+}
+
+function mergeCuredToDatasource1(places, lines){
+  const head = CSVtoArray(lines[0])
+  console.log('head', head)
+  const linesReal = lines.slice(1, lines.length - 1)
+  console.log('has real line:', linesReal.length)
+  console.log('line 0:', linesReal[0])
+  console.log('line last:', linesReal[linesReal.length -1])
+
+  linesReal.forEach(line => {
+    if(line.trim() === ''){
+      console.log('cancel empty line')
+    }
+    const elements = CSVtoArray(line)
+    if(!elements || elements.length !== head.length){
+      //throw Error( `bad line:'${line}'`)
+      console.error('bad line:', line)
+      return
+    }
+    const place = elements[1] + (elements[0]? ('|' + elements[0]) : '')
+    if(!places[place]){
+      //
+    }else{
+      const curedCount = {
+      }
+      for(let i = 4; i < head.length; i++ ){
+        //a date
+        const date = head[i]
+        if(!/\d+\/\d+\//.test(date)){
+          throw Error('the head is not a date:', date)
+        }
+        const dateFormated = moment(date, 'M/D/YY').format('YYYYMMDD')
+        const cases = elements[i]
+        if(!/\d+/.test(cases)){
+          throw Error('the cases is not a number:', cases)
+        }
+        const casesNumbered = parseInt(cases)
+        if(casesNumbered > 0){
+          curedCount[dateFormated] = casesNumbered
+        }
+      }
+      places[place].curedCount = curedCount
+    }
+  })
+  console.log('country sample:', Object.keys(places).slice(0, 5))
+  console.log('country count:', Object.keys(places).length)
+  console.error('Afghanistan:', places['Afghanistan'])
+  return places
+}
+
 function convertDatasource1USToMyData(lines){
   const head = CSVtoArray(lines[0])
   console.log('head', head)
@@ -117,6 +215,59 @@ function convertDatasource1USToMyData(lines){
   return places
 }
 
+function mergeDeathToDatasource1US(places, lines){
+  const head = CSVtoArray(lines[0])
+  console.log('head', head)
+  const linesReal = lines.slice(1, lines.length - 1)
+  console.log('has real line:', linesReal.length)
+  console.log('line 0:', linesReal[0])
+  console.log('line last:', linesReal[linesReal.length -1])
+
+  linesReal.forEach(line => {
+    if(line.trim() === ''){
+      console.log('cancel empty line')
+    }
+    const elements = CSVtoArray(line)
+    if(!elements || elements.length !== head.length){
+      //throw Error( `bad line:'${line}'`)
+      console.error('bad line:', line)
+      return
+    }
+    const placeOriginal = elements[10]
+    if(!/.*, ?US$/.test(placeOriginal)){
+      throw Error(`bad line, wrong location:${placeOriginal}`)
+    }
+    const place = 'United States of America|' + elements[10].split(',').slice(0, -1).reverse().map(e => e.trim()).join('|')
+    if(!places[place]){
+      //
+    }else{
+      const deadCount = {
+      }
+      for(let i = 12; i < head.length; i++ ){
+        //a date
+        const date = head[i]
+        if(!/\d+\/\d+\//.test(date)){
+          throw Error('the head is not a date:', date)
+        }
+        const dateFormated = moment(date, 'M/D/YY').format('YYYYMMDD')
+        const cases = elements[i]
+        if(!/\d+/.test(cases)){
+          throw Error('the cases is not a number:', cases)
+        }
+        const casesNumbered = parseInt(cases)
+        if(casesNumbered > 0){
+          deadCount[dateFormated] = casesNumbered
+        }
+      }
+      places[place].deadCount = deadCount
+    }
+  })
+  console.log('country sample:', Object.keys(places).slice(0, 5))
+  console.log('country count:', Object.keys(places).length)
+  console.error('United States of America|Guam:', places['United States of America|Guam'])
+  return places
+}
+
 function convertDatasource2ToMyData(json){
   function confirmedCountConvert(confirmedCount){
     //convert the timestamp
@@ -154,6 +305,8 @@ function convertDatasource2ToMyData(json){
     }
     places[countryName] = {
       confirmedCount: confirmedCountConvert(confirmedCount),
+      deadCount: confirmedCountConvert(country.deadCount),
+      curedCount: confirmedCountConvert(country.curedCount),
       source: 2,
     }
 
@@ -176,6 +329,8 @@ function convertDatasource2ToMyData(json){
       }
       places[countryName + "|" + adm1Name] = {
         confirmedCount: confirmedCountConvert(confirmedCount),
+        deadCount: confirmedCountConvert(adm1Place.deadCount),
+        curedCount: confirmedCountConvert(adm1Place.curedCount),
         source: 2,
       }
 
@@ -198,6 +353,8 @@ function convertDatasource2ToMyData(json){
         }
         places[countryName + "|" + adm1Name + "|" + adm2Name] = {
           confirmedCount: confirmedCountConvert(confirmedCount),
+          deadCount: confirmedCountConvert(adm2Place.deadCount),
+          curedCount: confirmedCountConvert(adm2Place.curedCount),
           source: 2,
         }
 
@@ -220,6 +377,8 @@ function convertDatasource2ToMyData(json){
           }
           places[countryName + "|" + adm1Name + "|" + adm2Name + "|" + adm3Name] = {
             confirmedCount: confirmedCountConvert(confirmedCount),
+            deadCount: confirmedCountConvert(adm3Place.deadCount),
+            curedCount: confirmedCountConvert(adm3Place.curedCount),
             source: 2,
           }
 
@@ -242,6 +401,8 @@ function convertDatasource2ToMyData(json){
             }
             places[countryName + "|" + adm1Name + "|" + adm2Name + "|" + adm3Name + "|" + adm4Name] = {
               confirmedCount: confirmedCountConvert(confirmedCount),
+              deadCount: confirmedCountConvert(adm4Place.deadCount),
+              curedCount: confirmedCountConvert(adm4Place.curedCount),
               source: 2,
             }
           })
@@ -251,7 +412,8 @@ function convertDatasource2ToMyData(json){
     })
   })
   console.log('plases sample:', Object.keys(places).slice(0, 2))
-  console.log('plases count:', Object.keys(places).length)
+  console.log('plases sample:', Object.keys(places).slice(0, 2))
+  console.log('Afghanistan sample:', places['Afghanistan'])
 
   return places
 
@@ -281,11 +443,18 @@ function outputTable(places){
   Object.keys(places).sort((a,b) => a >= b? 1: -1).forEach(place => {
     const placeValue = places[place]
     let casesAccumulated = 0
+    let deadAccumulated = 0
+    let curedAccumulated = 0
     Object.keys(placeValue.confirmedCount).forEach(dateString => {
       const adms = place.split('|')
       let line = ''
       const cases = parseInt(placeValue.confirmedCount[dateString])
-      if(casesAccumulated === cases){
+      const dead = parseInt((placeValue.deadCount && placeValue.deadCount[dateString]) || 0)
+      const cured = parseInt((placeValue.curedCount && placeValue.curedCount[dateString]) || 0)
+      if(casesAccumulated === cases && 
+        deadAccumulated === dead &&
+        curedAccumulated === cured
+      ){
         //equal cases, combine
         outputLines[outputLines.length - 1 ] = [...outputLines[outputLines.length - 1]]
         outputLines[outputLines.length - 1][7] = dateString
@@ -295,8 +464,8 @@ function outputTable(places){
           placeValue.Lat? placeValue.Lat:'',
           placeValue.Long? placeValue.Long:'',
           cases,
-          '',
-          '',
+          dead > 0?dead:'',
+          cured > 0?cured:'',
           dateString,
           dateString,
           `adm${adms.length - 1}`,
@@ -309,6 +478,8 @@ function outputTable(places){
         ]
         outputLines.push(line)
         casesAccumulated = cases
+        deadAccumulated = dead
+        curedAccumulated = cured
       }
     })
   })
@@ -336,12 +507,46 @@ function outputTable(places){
   }
 }
 
+function outputTableLocation(places){
+  //generate the output table
+  const outputHead = [
+    'num',
+    'placetype',
+    'adm0',
+    'adm1',
+    'adm3',
+    'adm4',
+    'indiv',
+  ]
+  let num = 1
+  const outputLines = []
+  Object.keys(places).sort((a,b) => a >= b? 1: -1).forEach(place => {
+    const adms = place.split('|')
+    const line = [
+      num++,
+      `adm${adms.length - 1}`,
+      adms[0],
+      adms[1]?adms[1]:'',
+      adms[2]?adms[2]:'',
+      adms[3]?adms[3]:'',
+    ]
+    outputLines.push(line)
+  })
+  console.log('output lines sample:', outputLines.slice(0, 20))
+  console.log('output lines num:', outputLines.length)
+  return {
+    outputLines: [outputHead, ...outputLines],
+    places,
+  }
+}
+
 function run(){
   //data source 1
   let places1 = {}
   let places1US = {}
   let places2 = {}
   fetch('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv').then(data => {
+    console.log('DS1, confirm...')
     const dataString = data.toString()
     console.log('sample data:', dataString.slice(0, 200))
     const lines = dataString.split(/\n/)
@@ -350,8 +555,31 @@ function run(){
     console.log('line last:', lines[lines.length -1])
     places1 = convertDatasource1ToMyData(lines)
   }).then(() => {
+    return fetch('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
+  }).then(data => {
+    console.log('DS1, death...')
+    const dataString = data.toString()
+    console.log('sample data:', dataString.slice(0, 200))
+    const lines = dataString.split(/\n/)
+    console.log('has line:', lines.length)
+    console.log('line 0:', lines[0])
+    console.log('line last:', lines[lines.length -1])
+    mergeDeathToDatasource1(places1, lines)
+  }).then(() => {
+    return fetch('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv')
+  }).then(data => {
+    console.log('DS1, recover...')
+    const dataString = data.toString()
+    console.log('sample data:', dataString.slice(0, 200))
+    const lines = dataString.split(/\n/)
+    console.log('has line:', lines.length)
+    console.log('line 0:', lines[0])
+    console.log('line last:', lines[lines.length -1])
+    mergeCuredToDatasource1(places1, lines)
+  }).then(data => {
     return fetch('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv')
   }).then(data => {
+    console.log('DS1US, confirm...')
     const dataString = data.toString()
     console.log('sample data:', dataString.slice(0, 200))
     const lines = dataString.split(/\n/)
@@ -360,8 +588,20 @@ function run(){
     console.log('line last:', lines[lines.length -1])
     places1US = convertDatasource1USToMyData(lines)
   }).then(() => {
+    return fetch('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
+  }).then(data => {
+    console.log('DS1US, death...')
+    const dataString = data.toString()
+    console.log('sample data:', dataString.slice(0, 200))
+    const lines = dataString.split(/\n/)
+    console.log('has line:', lines.length)
+    console.log('line 0:', lines[0])
+    console.log('line last:', lines[lines.length -1])
+    mergeDeathToDatasource1US(places1US, lines)
+  }).then(() => {
     return fetch('https://raw.githubusercontent.com/stevenliuyi/covid19/master/public/data/all.json')
   }).then(data => {
+    console.log('DS2...')
     const json = JSON.parse(data.toString())
     places2 = convertDatasource2ToMyData(json)
   }).then(() => {
@@ -387,6 +627,16 @@ function run(){
         '"' + new Date().toUTCString() + '"' + 
         '\n'
       )
+      //locations table
+      {
+        const result = outputTableLocation(places)
+        fs.writeFileSync(
+          './data/locations.csv',
+          result.outputLines.reduce((a,c,i) => {
+            {return i === 0 ? c: (a + '\n' + c)}
+          },'')
+        )
+      }
     }
 
     //datasource 1 table
@@ -460,5 +710,17 @@ function CSVtoArray(text) {
     return a;
 }
 
-export {fetch, CSVtoArray, run, convertDatasource1ToMyData,convertDatasource1USToMyData, convertDatasource2ToMyData, outputTable}
+export {
+  fetch, 
+  CSVtoArray, 
+  run, 
+  convertDatasource1ToMyData,
+  convertDatasource1USToMyData, 
+  convertDatasource2ToMyData, 
+  outputTable,
+  outputTableLocation,
+  mergeDeathToDatasource1,
+  mergeCuredToDatasource1,
+  mergeDeathToDatasource1US,
+}
 

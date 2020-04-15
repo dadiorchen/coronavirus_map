@@ -1,7 +1,18 @@
 import fs from 'fs'
 import https from 'https'
 import moment from 'moment'
-import {CSVtoArray, fetch, convertDatasource1ToMyData,convertDatasource1USToMyData, convertDatasource2ToMyData, outputTable} from './main.js'
+import {
+  CSVtoArray, 
+  fetch, 
+  convertDatasource1ToMyData,
+  convertDatasource1USToMyData, 
+  convertDatasource2ToMyData, 
+  outputTable,
+  outputTableLocation,
+  mergeDeathToDatasource1,
+  mergeCuredToDatasource1,
+  mergeDeathToDatasource1US,
+} from './main.js'
 
 describe('moment', () => {
   it('2/24/20 -> 20200122', () => {
@@ -25,6 +36,31 @@ describe('test', () => {
     console.log('line 0:', lines[0])
     console.log('line last:', lines[lines.length -1])
     const places = convertDatasource1ToMyData(lines)
+    
+    //merge death
+    {
+      const data = fs.readFileSync('./samples/time_series_covid19_deaths_global.csv') 
+      const dataString = data.toString()
+      console.log('sample data:', dataString.slice(0, 200))
+      const lines = dataString.split(/\n/)
+      console.log('has line:', lines.length)
+      console.log('line 0:', lines[0])
+      console.log('line last:', lines[lines.length -1])
+      mergeDeathToDatasource1(places, lines)
+    }
+
+    //merge cured
+    {
+      const data = fs.readFileSync('./samples/time_series_covid19_recovered_global.csv') 
+      const dataString = data.toString()
+      console.log('sample data:', dataString.slice(0, 200))
+      const lines = dataString.split(/\n/)
+      console.log('has line:', lines.length)
+      console.log('line 0:', lines[0])
+      console.log('line last:', lines[lines.length -1])
+      mergeCuredToDatasource1(places, lines)
+    }
+
     outputTable(places)
   })
 
@@ -37,6 +73,19 @@ describe('test', () => {
     console.log('line 0:', lines[0])
     console.log('line last:', lines[lines.length -1])
     const places = convertDatasource1USToMyData(lines)
+
+    //merge death
+    {
+      const data = fs.readFileSync('./samples/time_series_covid19_deaths_US.csv') 
+      const dataString = data.toString()
+      console.log('sample data:', dataString.slice(0, 200))
+      const lines = dataString.split(/\n/)
+      console.log('has line:', lines.length)
+      console.log('line 0:', lines[0])
+      console.log('line last:', lines[lines.length -1])
+      mergeDeathToDatasource1US(places, lines)
+    }
+
     outputTable(places)
   })
 
@@ -45,6 +94,14 @@ describe('test', () => {
     const json = JSON.parse(data.toString())
     const places = convertDatasource2ToMyData(json)
     const result = outputTable(places)
+    console.log('output table sample:', result.outputLines.slice(0, 5))
+  })
+
+  it('print location table', () => {
+    const data = fs.readFileSync('./samples/source2.json')
+    const json = JSON.parse(data.toString())
+    const places = convertDatasource2ToMyData(json)
+    const result = outputTableLocation(places)
     console.log('output table sample:', result.outputLines.slice(0, 5))
   })
 
